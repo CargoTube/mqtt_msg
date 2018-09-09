@@ -1,0 +1,18 @@
+%%
+%% Copyright (c) 2018 Bas Wegh
+%%
+
+{application, mqtt_msg,
+ [
+  {description, "a mqtt message"},
+  {vsn,"semver"},
+  {modules, []},
+  {registered, []},
+  {applications,
+   [
+    kernel,
+    stdlib
+   ]
+  },
+  {env, []}
+ ]}.
