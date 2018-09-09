@@ -17,8 +17,6 @@
 	 pingresp/0, disconnect/0 
 	]).
 
--export([test/0]).
-
 connect(Id) ->
 	ProtName = string(<<"MQTT">>),
 	ProtLevel = <<4:8>>,
@@ -344,87 +342,3 @@ to_bit(true) ->
 to_bit(false) ->
 	0.
 
-test() ->
-    redbug:start(["mqtt_msg -> return"], [{msgs, 100000}, {time, 3600000}]),
-
-    io:format("connect"),
-    Con = connect(<<"test">>),
-    {{connect, _}, <<>>} = parse(Con),
-    sleep(500),
-
-    io:format("concack"),
-    ConnAck = connack(false, 0),
-    {{connack, _}, <<>>} = parse(ConnAck),
-    sleep(500),
-
-    io:format("pub1"),
-    Publish1 = publish(<<"test">>,<<"one">>,4,0),
-    {{publish, Map1}, <<>>} = parse(Publish1),
-    -1 = maps:get(packet_id, Map1, 0),
-    sleep(500),
-
-    io:format("pub2"),
-    Publish2 = publish(<<"test">>,<<"one">>,4,1),
-    {{publish, Map2}, <<>>} = parse(Publish2),
-    4 = maps:get(packet_id, Map2, 0),
-    sleep(500),
-
-    io:format("puback"),
-    PubAck = puback(4),
-    {{puback, _}, <<>>} = parse(PubAck),
-    sleep(500),
-
-    io:format("pubrec"),
-    PubRec = pubrec(4),
-    {{pubrec, _}, <<>>} = parse(PubRec),
-    sleep(500),
-
-    io:format("pubrel"),
-    PubRel = pubrel(4),
-    {{pubrel, _}, <<>>} = parse(PubRel),
-    sleep(500),
-
-    io:format("pubcomp"),
-    PubComp = pubcomp(4),
-    {{pubcomp, _}, <<>>} = parse(PubComp),
-    sleep(500),
-
-    io:format("sub"),
-    Subscribe = subscribe(23,[{<<"topic1">>,2},{<<"topic2">>,0}]),
-    {{subscribe, _}, <<>>} = parse(Subscribe),
-    sleep(500),
-
-    io:format("suback"),
-    Suback = suback(23, [1,0]),
-    {{suback, _}, <<>>} = parse(Suback),
-    sleep(500),
-
-    io:format("unsub"),
-    Unsubscribe = unsubscribe(13, [<<"topic1">>, <<"topic2">>]),
-    {{unsubscribe, _}, <<>>} = parse(Unsubscribe),
-    sleep(500),
-
-    io:format("unsuback"),
-    Unsuback = unsuback(13),
-    {{unsuback, _}, <<>>} = parse(Unsuback),
-    sleep(500),
-
-    io:format("ping req"),
-    Pingreq = pingreq(),
-    {{pingreq, _}, <<>>} = parse(Pingreq),
-    sleep(500),
-    
-    io:format("ping resp"),
-    Pingresp = pingresp(),
-    {{pingresp, _}, <<>>} = parse(Pingresp),
-    sleep(500),
-
-    io:format("disconnect"),
-    Disconnect = disconnect(),
-    {{disconnect, _}, <<>>} = parse(Disconnect),
-
-    io:format("done"),
-    ok.
-
-sleep(Time) ->
-	timer:sleep(Time).

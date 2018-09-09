@@ -1,4 +1,4 @@
-REBAR = $(shell pwd)/rebar3
+REBAR = ./rebar3
 APP=sb_core
 
 .PHONY: all ct test clean elvis compile
