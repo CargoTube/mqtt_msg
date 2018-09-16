@@ -5,6 +5,11 @@ connect_test() ->
     Con = mqtt_msg:connect(<<"test">>),
     {{connect, Map}, <<>>} = mqtt_msg:parse(Con),
     StringMap = maps:get(string_map, Map),
+    true = maps:is_key(client_id, StringMap),
+    true = maps:is_key(will_topic, StringMap),
+    true = maps:is_key(will_message, StringMap),
+    true = maps:is_key(user_name, StringMap),
+    true = maps:is_key(password, StringMap),
     <<"test">> = maps:get(client_id, StringMap).
 
 

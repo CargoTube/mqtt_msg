@@ -216,7 +216,8 @@ connect_strings_to_map( StringList, Flags) ->
 	       NewMap = maps:put(Key, H, Map),
 	       {Strings, NewMap};
 	    _ -> 
-	       {StringsIn, Map}
+	       NewMap = maps:put(Key, undefined, Map),
+	       {StringsIn, NewMap}
 	  end
       end,
     {[], StringMap} = lists:foldl(ToMap, {StringList, #{}}, Order),
