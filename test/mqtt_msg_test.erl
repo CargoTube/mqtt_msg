@@ -1,8 +1,9 @@
 -module(mqtt_msg_test).
 -include_lib("eunit/include/eunit.hrl").
 
-connect_test() ->
-    Con = mqtt_msg:connect(<<"test">>),
+basic_connect_test() ->
+    ClientId = <<"test">>,
+    Con = mqtt_msg:connect(#{client_id => ClientId}),
     {{connect, Map}, <<>>} = mqtt_msg:parse(Con),
     StringMap = maps:get(string_map, Map),
     true = maps:is_key(client_id, StringMap),
@@ -10,7 +11,30 @@ connect_test() ->
     true = maps:is_key(will_message, StringMap),
     true = maps:is_key(user_name, StringMap),
     true = maps:is_key(password, StringMap),
-    <<"test">> = maps:get(client_id, StringMap).
+    ClientId = maps:get(client_id, StringMap).
+
+will_connect_test() ->
+    ClientId = <<"test">>,
+    WillTopic = <<"dc/will">>,
+    WillMessage = <<"I am out">>,
+    KeepAlive = 300,
+    Con = mqtt_msg:connect(#{client_id => ClientId, 
+			     will_topic => WillTopic,
+			     will_message => WillMessage,
+			     keep_alive => KeepAlive
+			    }),
+    {{connect, Map}, <<>>} = mqtt_msg:parse(Con),
+    StringMap = maps:get(string_map, Map),
+    true = maps:is_key(client_id, StringMap),
+    true = maps:is_key(will_topic, StringMap),
+    true = maps:is_key(will_message, StringMap),
+    true = maps:is_key(user_name, StringMap),
+    true = maps:is_key(password, StringMap),
+    ClientId = maps:get(client_id, StringMap),
+    WillMessage = maps:get(will_message, StringMap),
+    WillTopic = maps:get(will_topic, StringMap),
+    KeepAlive = maps:get(keep_alive, Map),
+    ok.
 
 
 connack_test() ->

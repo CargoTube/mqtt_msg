@@ -8,7 +8,7 @@
 %% for ranch_protocol
 -export([parse/1]).
 
--export([connect/1, connack/2, 
+-export([connect/1,  connack/2, 
 	 publish/4, publish/2, puback/1, 
 	 pubrec/1, pubrel/1, 
 	 pubcomp/1, subscribe/2, 
@@ -17,15 +17,40 @@
 	 pingresp/0, disconnect/0 
 	]).
 
-connect(Id) ->
+connect(#{ client_id := Id } = ConMap) ->
+	UserName = maps:get(user_name, ConMap, undefined),
+	UserNameFlag = to_bit(is_binary(UserName)),
+
+	Password = maps:get(password, ConMap, undefined),
+	PasswordFlag = to_bit(is_binary(Password)),
+
+	WillTopic = maps:get(will_topic, ConMap, undefined),
+	WillMsg = maps:get(will_message, ConMap, undefined),
+	WillFlag = to_bit(is_binary(WillTopic) and is_binary(WillMsg)),
+
+	WillRetainFlag = to_bit(maps:get(will_retain, ConMap, false)),
+	WillQos  = maps:get(will_qos, ConMap, 0),
+
+	CleanSession = to_bit(maps:get(clean_session, ConMap, false)),
+	KeepAlive = maps:get(keep_alive, ConMap, 0),
+
 	ProtName = string(<<"MQTT">>),
 	ProtLevel = <<4:8>>,
-	ConFlags = <<0:8>>,
-	KeepAlive = <<1:16>>,
-	ClientId = string(Id),
-	VarHeader = <<ProtName/binary, ProtLevel/binary, ConFlags/binary, KeepAlive/binary>>,
-	Payload = ClientId,
+	ConFlags = <<UserNameFlag:1, PasswordFlag:1, WillRetainFlag:1, WillQos:2, WillFlag:1, CleanSession:1, 0:1>>,
+	KeepAliveBytes = <<KeepAlive:16>>,
+	VarHeader = <<ProtName/binary, ProtLevel/binary, ConFlags/binary, KeepAliveBytes/binary>>,
+	Payload = connect_payload([Id, WillTopic, WillMsg, UserName, Password]),  
 	packet(<<1:4, 0:4>>, VarHeader, Payload).
+
+connect_payload(List) ->
+    ToPayload = 
+      fun(String, Payload) when is_binary(String) ->
+	   PayloadString = string(String),
+           << Payload/binary,  PayloadString/binary>>;
+	 (_, Payload) ->
+	   Payload
+      end,
+    lists:foldl(ToPayload, <<>>, List).
 
 
 connack(SessPres, RetCode) ->
