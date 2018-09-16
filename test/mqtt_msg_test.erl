@@ -3,7 +3,10 @@
 
 connect_test() ->
     Con = mqtt_msg:connect(<<"test">>),
-    {{connect, _}, <<>>} = mqtt_msg:parse(Con).
+    {{connect, Map}, <<>>} = mqtt_msg:parse(Con),
+    StringMap = maps:get(string_map, Map),
+    <<"test">> = maps:get(client_id, StringMap).
+
 
 connack_test() ->
     ConnAck = mqtt_msg:connack(false, 0),

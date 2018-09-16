@@ -177,6 +177,14 @@ parse_connect(_Flags, Data, NewBuffer) ->
 	{KeepAlive, Data3} = parse_int(Data2),
 	Strings = parse_list_of_strings(Data3),
 	<< UserName:1, Pwd:1, WillRetain:1, WillQos:2/unsigned, Will:1, CleanSess:1, 0:1 >> = << ConFlags >>,
+	Flags = #{ user_name => to_bool(UserName),
+				password => to_bool(Pwd),
+				will_retain => to_bool(WillRetain),
+				will_qos => WillQos,
+				will => to_bool(Will),
+				clean_session => to_bool(CleanSess)
+			       } ,
+	StringMap = connect_strings_to_map(Strings, Flags),
 	{{connect, #{prot_level => ProtLevel, keep_alive => KeepAlive, 
 		     prot_name => ProtName,
 		    flags => #{ user_name => to_bool(UserName),
@@ -186,9 +194,34 @@ parse_connect(_Flags, Data, NewBuffer) ->
 				will => to_bool(Will),
 				clean_session => to_bool(CleanSess)
 			       } ,
-		    strings => Strings
+		    strings => Strings,
+		    string_map => StringMap
 		   }}, NewBuffer}.
 
+connect_strings_to_map( StringList, Flags) ->
+    Order = [{ client_id, true },
+	     { will_topic, will },
+	     { will_message, will },
+	     { user_name, user_name },
+	     { password, password } 
+	    ],
+    ToMap = 
+      fun({Key, true}, {[H | Strings], Map} ) ->
+           NewMap = maps:put(Key, H, Map),
+	   { Strings, NewMap }; 
+         ({Key, Flag}, {StringsIn, Map}) ->
+	   case maps:get(Flag, Flags, false) of 
+	     true ->
+               [ H | Strings ] = StringsIn,
+	       NewMap = maps:put(Key, H, Map),
+	       {Strings, NewMap};
+	    _ -> 
+	       {StringsIn, Map}
+	  end
+      end,
+    {[], StringMap} = lists:foldl(ToMap, {StringList, #{}}, Order),
+    StringMap.
+    
 
 parse_connack(_Flags, Data, NewBuffer) ->
 	<< 0:7, SessPresent:1, ReturnCode:8/unsigned >> = Data,
